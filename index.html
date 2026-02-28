@@ -253,7 +253,7 @@
 <main>
   <div class="section-rule"><span class="ornament">✦</span><h2>Featured Dispatches</h2><span class="ornament">✦</span></div>
 
-  <div class="hero-grid">
+  <div class="hero-grid" id="heroGrid">
     <div class="article-card hero" onclick="openArticle('hero1')">
       <div class="hero-bg"></div>
       <div class="article-content">
@@ -298,7 +298,7 @@
   </div>
 
   <div class="section-rule"><span class="ornament">✦</span><h2>United States</h2><span class="ornament">✦</span></div>
-  <div class="news-grid">
+  <div class="news-grid" id="newsGrid">
     <div class="article-card small" onclick="openArticle('usa2')">
       <span class="cat-tag usa">USA</span>
       <div class="article-title">Ranked-Choice Voting Gains Ground in Pennsylvania County Primaries</div>
@@ -353,16 +353,6 @@
       <div class="read-more">Read →</div>
     </div>
   </div>
-  <!-- LIVE NEWS FROM API -->
-  <div id="live-news-section" style="display:none">
-    <div class="section-rule">
-      <span class="ornament">✦</span>
-      <h2 id="live-section-title">Live Dispatches</h2>
-      <span class="ornament">✦</span>
-    </div>
-    <div class="news-grid" id="live-news-grid"></div>
-  </div>
-
 </main>
 
 <footer>
@@ -387,6 +377,141 @@
 </div>
 
 <script>
+// API key is stored securely in Netlify environment variables
+
+// Categorize articles by keyword
+function categorize(title, description) {
+  const text = (title + ' ' + description).toLowerCase();
+  if (text.includes('technology') || text.includes('voting machine') || text.includes('blockchain') || text.includes('cyber') || text.includes('electronic') || text.includes('software') || text.includes('hack') || text.includes('ai ') || text.includes('artificial')) return 'tech';
+  if (text.includes('usa') || text.includes('united states') || text.includes('congress') || text.includes('senate') || text.includes('republican') || text.includes('democrat') || text.includes('county') || text.includes('california') || text.includes('texas') || text.includes('florida') || text.includes('ohio') || text.includes('ballot') || text.includes('midterm') || text.includes('primary') || text.includes('referendum')) return 'usa';
+  return 'world';
+}
+
+function catLabel(cat) {
+  return { usa: 'USA', world: 'World', tech: 'Electoral Tech' }[cat] || 'World';
+}
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+  return `${Math.floor(diff/1440)}d ago`;
+}
+
+// Live articles storage
+let liveArticles = {};
+
+async function fetchNews() {
+  const queries = [
+    { q: 'election USA voting ballot', cat: 'usa' },
+    { q: 'world election vote democracy', cat: 'world' },
+    { q: 'voting technology electoral system', cat: 'tech' }
+  ];
+
+  const grid = document.getElementById('newsGrid');
+  const heroGrid = document.getElementById('heroGrid');
+  grid.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:2rem;font-family:\'Josefin Sans\',sans-serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--warm-brown)">LOADING DISPATCHES...</div>';
+
+  let allArticles = [];
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(`/.netlify/functions/news?q=${encodeURIComponent(q.q)}`);
+      const data = await res.json();
+      if (data.articles) {
+        data.articles.forEach(a => {
+          if (a.title && a.title !== '[Removed]' && a.description) {
+            allArticles.push({ ...a, suggestedCat: q.cat });
+          }
+        });
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  // Deduplicate by title
+  const seen = new Set();
+  allArticles = allArticles.filter(a => {
+    if (seen.has(a.title)) return false;
+    seen.add(a.title);
+    return true;
+  });
+
+  if (allArticles.length === 0) {
+    grid.innerHTML = '<div style="grid-column:span 3;text-align:center;padding:2rem;font-family:\'Josefin Sans\',sans-serif;font-size:0.75rem;color:var(--warm-brown)">Could not load live news. Showing sample content.</div>';
+    return;
+  }
+
+  // Build hero
+  const hero = allArticles[0];
+  const heroCat = categorize(hero.title, hero.description || '');
+  const heroId = 'live_0';
+  liveArticles[heroId] = hero;
+
+  heroGrid.innerHTML = `
+    <div class="article-card hero" onclick="openLiveArticle('${heroId}')">
+      <div class="hero-bg"></div>
+      <div class="article-content">
+        <span class="cat-tag">${catLabel(heroCat)}</span>
+        <div class="article-title">${hero.title}</div>
+        <div class="article-excerpt">${(hero.description || '').substring(0, 180)}...</div>
+        <div class="article-meta">${timeAgo(hero.publishedAt)} · ${hero.source?.name || 'News'} · 2 min read</div>
+        <div class="read-more">Read Dispatch →</div>
+      </div>
+    </div>
+    ${allArticles.slice(1,3).map((a,i) => {
+      const id = `live_${i+1}`;
+      const cat = categorize(a.title, a.description || '');
+      liveArticles[id] = a;
+      return `
+      <div class="article-card small" onclick="openLiveArticle('${id}')">
+        <span class="cat-tag ${cat}">${catLabel(cat)}</span>
+        <div class="article-title">${a.title}</div>
+        <div class="article-excerpt">${(a.description || '').substring(0,140)}...</div>
+        <div class="article-meta">${timeAgo(a.publishedAt)} · 2 min read</div>
+        <div class="read-more">Read →</div>
+      </div>`;
+    }).join('')}
+  `;
+
+  // Build grid
+  const rest = allArticles.slice(3, 12);
+  grid.innerHTML = rest.map((a, i) => {
+    const id = `live_${i+3}`;
+    const cat = categorize(a.title, a.description || '');
+    liveArticles[id] = a;
+    return `
+    <div class="article-card small" onclick="openLiveArticle('${id}')">
+      <span class="cat-tag ${cat}">${catLabel(cat)}</span>
+      <div class="article-title">${a.title}</div>
+      <div class="article-excerpt">${(a.description || '').substring(0,140)}...</div>
+      <div class="article-meta">${timeAgo(a.publishedAt)} · ${a.source?.name || 'News'} · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>`;
+  }).join('');
+
+  // Update ticker
+  const tickerTrack = document.querySelector('.ticker-track');
+  const tickerItems = allArticles.slice(0, 8).map(a => `<span>${a.title}</span>`).join('');
+  tickerTrack.innerHTML = tickerItems + tickerItems;
+}
+
+function openLiveArticle(id) {
+  const a = liveArticles[id];
+  if (!a) return;
+  const cat = categorize(a.title, a.description || '');
+  document.getElementById('modalCat').innerHTML = `<span class="cat-tag ${cat}">${catLabel(cat)}</span>`;
+  document.getElementById('modalTitle').textContent = a.title;
+  document.getElementById('modalMeta').textContent = `${new Date(a.publishedAt).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})} · ${a.source?.name || 'News'} · 2 min read`;
+  document.getElementById('modalLead').textContent = a.description || '';
+  document.getElementById('modalText').innerHTML = `<p>${a.content ? a.content.replace(/\[\+\d+ chars\]/, '') : a.description}</p>${a.url ? `<p style="margin-top:1rem"><a href="${a.url}" target="_blank" style="color:var(--deep-wine);font-family:'Josefin Sans',sans-serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;border-bottom:1px dotted var(--deep-wine)">Read full article at ${a.source?.name} →</a></p>` : ''}`;
+  document.getElementById('modalSource').textContent = `Source: ${a.source?.name || 'News Agency'} · ${a.author || ''}`;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Call on load
+window.addEventListener('DOMContentLoaded', fetchNews);
+
 const articles = {
   hero1: { cat:'world', catLabel:'World', title:"Germany's Election Reshapes the European Center — What It Means for Democracy in 2026", meta:"February 24, 2026 · World · 2 min read", lead:"Friedrich Merz's CDU/CSU coalition won Germany's federal election on February 23rd, ending the fractured Social Democratic-led government. The shift has immediate implications for European defense spending, migration policy, and the democratic center's resilience against far-right pressure.", text:`<p>Germany, long regarded as the stabilizing anchor of European liberal democracy, has voted. With 99% of votes counted, the CDU/CSU secured approximately 29% of the vote, enough to lead coalition negotiations with likely partners the SPD and potentially the Greens, while the far-right AfD came in at a record 20%.</p><p>Merz has signaled he will move quickly on a European debt instrument for defense, reversing Germany's traditional fiscal conservatism under pressure from NATO allies. His first calls were to Paris and Warsaw — a deliberate signal of continental priorities.</p><p>For electoral observers worldwide, the German result is a data point in a broader pattern: centrist coalitions are surviving, but at the cost of increasing complexity and shorter governing mandates. Watch how the coalition forms over the coming weeks — it will set the tone for European politics through 2028.</p>`, source:"Sources: Reuters, Deutsche Welle, ARD Exit Poll Data" },
   usa1: { cat:'usa', catLabel:'USA', title:"Texas HD-97: The Special Election That Could Tip the State House", meta:"February 28, 2026 · USA · 2 min read", lead:"A single vacant seat in a Fort Worth suburb has become the most expensive Texas state legislative race in a non-election year. The outcome on March 4th may determine which party controls the Texas House through redistricting.", text:`<p>Texas House District 97 covers portions of Arlington and the western Fort Worth suburbs — territory that has swung Republican in statewide races but elected a moderate Democrat to the state house in 2024. The vacancy triggered a special election that has drawn national attention.</p><p>Both the Republican Party of Texas and the Texas Democratic Party have deployed full field operations. Independent expenditure groups have spent a combined $4.2 million — extraordinary for a single state house seat.</p><p>What makes HD-97 pivotal is arithmetic: the Texas House currently sits at 83 Republicans and 67 Democrats. A Democratic pickup would force Speaker Dade Phelan into more fragile coalition management ahead of a legislative session where property tax reform, school vouchers, and water infrastructure are all on the agenda.</p><p>Early voting began February 24th. Turnout models from both parties project a razor-thin margin.</p>`, source:"Sources: Texas Tribune, Ballotpedia, FEC filings" },
@@ -425,107 +550,9 @@ function closeOnOverlay(e) {
 function filterSection(cat, el) {
   document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
   el.classList.add('active');
-  if (cat === 'all') loadNews('election OR ballot OR voting');
-  else if (cat === 'usa') loadNews('US election OR county ballot OR referendum USA');
-  else if (cat === 'world') loadNews('world election OR presidential election OR parliament vote');
-  else if (cat === 'tech') loadNews('voting technology OR electoral system OR voting machine');
-  else if (cat === 'calendar') loadNews('election date OR election schedule 2026');
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-// ─── NEWS API INTEGRATION ───
-const API_KEY = 'b91d07ad9ca84c78b968e3207fd371da';
-
-function getCategoryFromTitle(title) {
-  const t = title.toLowerCase();
-  if (t.includes('tech') || t.includes('machine') || t.includes('blockchain') || t.includes('ai') || t.includes('software') || t.includes('cyber') || t.includes('digital')) return { cat: 'tech', label: 'Electoral Tech' };
-  if (t.includes('usa') || t.includes('united states') || t.includes('congress') || t.includes('senate') || t.includes('county') || t.includes('state') || t.includes('california') || t.includes('texas') || t.includes('florida') || t.includes('ohio') || t.includes('michigan')) return { cat: 'usa', label: 'USA' };
-  return { cat: 'world', label: 'World' };
-}
-
-function timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
-  if (diff < 60) return `${diff}m ago`;
-  if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
-  return `${Math.floor(diff/1440)}d ago`;
-}
-
-function buildArticleCard(article, size='small') {
-  const { cat, label } = getCategoryFromTitle(article.title + ' ' + (article.description || ''));
-  const excerpt = article.description ? article.description.slice(0, 180) + '...' : 'Read the full article for details.';
-  const when = timeAgo(article.publishedAt);
-  const src = article.source?.name || 'Wire';
-  const id = 'live_' + Math.random().toString(36).slice(2);
-
-  // Store article data for modal
-  window._liveArticles = window._liveArticles || {};
-  window._liveArticles[id] = {
-    cat, catLabel: label,
-    title: article.title,
-    meta: `${when} · ${src} · 2 min read`,
-    lead: excerpt,
-    text: `<p>${excerpt}</p><p>This article was retrieved live from ${src}. For the full story, visit the original source.</p>`,
-    source: `Source: ${src} · ${article.url ? `<a href="${article.url}" target="_blank" rel="noopener">Read original →</a>` : ''}`
-  };
-
-  return `<div class="article-card ${size}" onclick="openLiveArticle('${id}')">
-    <span class="cat-tag ${cat}">${label}</span>
-    <div class="article-title">${article.title}</div>
-    <div class="article-excerpt">${excerpt}</div>
-    <div class="article-meta">${when} · ${src}</div>
-    <div class="read-more">Read →</div>
-  </div>`;
-}
-
-function openLiveArticle(id) {
-  const a = window._liveArticles?.[id];
-  if (!a) return;
-  document.getElementById('modalCat').innerHTML = `<span class="cat-tag ${a.cat}">${a.catLabel}</span>`;
-  document.getElementById('modalTitle').textContent = a.title;
-  document.getElementById('modalMeta').textContent = a.meta;
-  document.getElementById('modalLead').textContent = a.lead;
-  document.getElementById('modalText').innerHTML = a.text;
-  document.getElementById('modalSource').innerHTML = a.source;
-  document.getElementById('modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-async function loadNews(query = 'election OR ballot OR voting') {
-  const liveSection = document.getElementById('live-news-section');
-  const liveGrid = document.getElementById('live-news-grid');
-  const liveTitle = document.getElementById('live-section-title');
-
-  liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;letter-spacing:0.15em;color:var(--warm-brown);grid-column:1/-1">FETCHING DISPATCHES...</div>`;
-  liveSection.style.display = 'block';
-
-  try {
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=6&apiKey=${API_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.status !== 'ok' || !data.articles?.length) {
-      liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;color:var(--warm-brown);grid-column:1/-1">No dispatches found. Try another section.</div>`;
-      return;
-    }
-
-    // Update stat counters
-    document.querySelector('.stat-value').textContent = data.totalResults > 99 ? '99+' : data.totalResults;
-
-    liveGrid.innerHTML = data.articles.map(a => buildArticleCard(a)).join('');
-
-    // Update ticker with real headlines
-    const tickerTrack = document.querySelector('.ticker-track');
-    const headlines = data.articles.slice(0, 8).map(a => `<span>${a.title}</span>`).join('');
-    tickerTrack.innerHTML = headlines + headlines;
-
-  } catch (err) {
-    liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;color:var(--terracotta);grid-column:1/-1">Could not reach NewsAPI. Check connection or API key.</div>`;
-  }
-}
-
-// Load on startup
-window.addEventListener('DOMContentLoaded', () => loadNews('election OR ballot OR voting'));
 </script>
 </body>
 </html>
