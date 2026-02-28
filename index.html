@@ -1,1 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Electoral Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5EDD8;
+    --parchment: #EDE0C4;
+    --warm-brown: #8B6347;
+    --deep-wine: #6B2737;
+    --dusty-rose: #C4856A;
+    --forest: #3D5A47;
+    --gold: #C9A84C;
+    --charcoal: #2C2416;
+    --muted-sage: #8A9E8C;
+    --terracotta: #B5593A;
+    --soft-shadow: rgba(44, 36, 22, 0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: var(--cream);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23F5EDD8'/%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23C9A84C' opacity='0.08'/%3E%3C/svg%3E");
+    color: var(--charcoal);
+    font-family: 'Libre Baskerville', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+  header {
+    background-color: var(--deep-wine);
+    background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(201,168,76,0.04) 2px,rgba(201,168,76,0.04) 4px);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--gold);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0 0.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.3);
+  }
+  .dateline { font-family: 'Josefin Sans', sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; color: rgba(245,237,216,0.6); text-transform: uppercase; }
+  .masthead { text-align: center; flex: 1; }
+  .masthead h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem,5vw,3.2rem); font-weight: 900; color: var(--cream); letter-spacing: 0.02em; line-height: 1; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); }
+  .masthead .subtitle { font-family: 'Josefin Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.35em; color: var(--gold); text-transform: uppercase; margin-top: 0.3rem; }
+  .edition-badge { font-family: 'Josefin Sans', sans-serif; font-size: 0.65rem; color: rgba(245,237,216,0.6); letter-spacing: 0.12em; text-align: right; text-transform: uppercase; }
+  nav { display: flex; justify-content: center; gap: 0; padding: 0.5rem 0; }
+  nav a { font-family: 'Josefin Sans', sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,237,216,0.75); text-decoration: none; padding: 0.4rem 1.2rem; border-right: 1px solid rgba(201,168,76,0.2); transition: color 0.2s, background 0.2s; cursor: pointer; }
+  nav a:first-child { border-left: 1px solid rgba(201,168,76,0.2); }
+  nav a:hover, nav a.active { color: var(--gold); background: rgba(201,168,76,0.08); }
+  .dashboard { background: var(--charcoal); padding: 0.8rem 2rem; display: flex; gap: 1px; justify-content: center; flex-wrap: wrap; border-bottom: 2px solid var(--warm-brown); }
+  .stat-card { background: transparent; padding: 0.6rem 2rem; text-align: center; cursor: pointer; position: relative; border-right: 1px solid rgba(139,99,71,0.4); transition: background 0.2s; flex: 1; min-width: 140px; max-width: 220px; }
+  .stat-card:last-child { border-right: none; }
+  .stat-card:hover { background: rgba(201,168,76,0.08); }
+  .stat-label { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted-sage); margin-bottom: 0.2rem; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--gold); line-height: 1; }
+  .stat-sub { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; color: rgba(245,237,216,0.4); margin-top: 0.15rem; letter-spacing: 0.1em; }
+  .stat-tooltip { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--parchment); border: 1px solid var(--gold); border-radius: 2px; padding: 0.8rem 1rem; width: 240px; z-index: 200; box-shadow: 4px 4px 16px var(--soft-shadow); text-align: left; }
+  .stat-card:hover .stat-tooltip { display: block; }
+  .stat-tooltip::before { content: '▲'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 0.7rem; }
+  .stat-tooltip h4 { font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--deep-wine); margin-bottom: 0.4rem; border-bottom: 1px solid var(--parchment); padding-bottom: 0.3rem; }
+  .stat-tooltip ul { list-style: none; padding: 0; }
+  .stat-tooltip ul li { font-family: 'Josefin Sans', sans-serif; font-size: 0.7rem; color: var(--charcoal); padding: 0.2rem 0; border-bottom: 1px dotted var(--parchment); display: flex; justify-content: space-between; }
+  .stat-tooltip ul li span { color: var(--terracotta); font-weight: 600; }
+  .ticker { background: var(--forest); padding: 0.4rem 0; overflow: hidden; position: relative; }
+  .ticker-label { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold); color: var(--charcoal); font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; padding: 0 1rem; display: flex; align-items: center; z-index: 2; }
+  .ticker-track { display: flex; gap: 3rem; animation: ticker 40s linear infinite; padding-left: 120px; white-space: nowrap; }
+  .ticker-track span { font-family: 'Josefin Sans', sans-serif; font-size: 0.68rem; color: rgba(245,237,216,0.85); letter-spacing: 0.08em; }
+  .ticker-track span::before { content: '◆ '; color: var(--gold); font-size: 0.5rem; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  main { max-width: 1300px; margin: 0 auto; padding: 2rem 2rem; animation: fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .section-rule { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0 1.5rem; }
+  .section-rule h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--deep-wine); white-space: nowrap; letter-spacing: 0.02em; }
+  .section-rule::before, .section-rule::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--warm-brown), transparent); }
+  .section-rule .ornament { color: var(--gold); font-size: 0.8rem; }
+  .hero-grid { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; gap: 1.5px; background: var(--warm-brown); border: 1.5px solid var(--warm-brown); margin-bottom: 0.1rem; }
+  .article-card { background: var(--cream); padding: 1.5rem; cursor: pointer; transition: background 0.2s; position: relative; overflow: hidden; }
+  .article-card:hover { background: #F9F2E2; }
+  .article-card.hero { grid-row: span 2; padding: 2rem; display: flex; flex-direction: column; justify-content: flex-end; min-height: 340px; background: var(--charcoal); position: relative; }
+  .hero-bg { position: absolute; inset: 0; background: linear-gradient(to top, rgba(44,36,22,0.95) 40%, rgba(44,36,22,0.3) 100%), repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(201,168,76,0.03) 10px,rgba(201,168,76,0.03) 20px); }
+  .article-card.hero .article-content { position: relative; z-index: 2; }
+  .cat-tag { display: inline-block; font-family: 'Josefin Sans', sans-serif; font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.2rem 0.6rem; margin-bottom: 0.6rem; border-radius: 1px; }
+  .cat-tag.usa { background: var(--deep-wine); color: var(--cream); }
+  .cat-tag.world { background: var(--forest); color: var(--cream); }
+  .cat-tag.tech { background: var(--terracotta); color: var(--cream); }
+  .cat-tag.calendar { background: var(--warm-brown); color: var(--cream); }
+  .article-card.hero .cat-tag { background: var(--gold); color: var(--charcoal); }
+  .article-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; line-height: 1.3; color: var(--charcoal); margin-bottom: 0.5rem; transition: color 0.2s; }
+  .article-card:hover .article-title { color: var(--deep-wine); }
+  .article-card.hero .article-title { font-size: 1.6rem; color: var(--cream); font-style: italic; }
+  .article-card.hero:hover .article-title { color: var(--gold); }
+  .article-excerpt { font-size: 0.82rem; line-height: 1.65; color: #5C4B35; }
+  .article-card.hero .article-excerpt { color: rgba(245,237,216,0.75); font-size: 0.85rem; margin-top: 0.5rem; }
+  .article-meta { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; color: var(--warm-brown); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.8rem; }
+  .article-card.hero .article-meta { color: rgba(201,168,76,0.7); margin-top: 1rem; }
+  .read-more { display: inline-block; font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-top: 0.8rem; border-bottom: 1px solid var(--gold); padding-bottom: 1px; transition: opacity 0.2s; }
+  .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; background: var(--warm-brown); border: 1.5px solid var(--warm-brown); margin-bottom: 2rem; }
+  .calendar-strip { background: var(--charcoal); border: 1.5px solid var(--warm-brown); padding: 1.5rem 2rem; margin-bottom: 2rem; display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: center; }
+  .calendar-icon { text-align: center; }
+  .calendar-icon .month { background: var(--deep-wine); color: var(--cream); font-family: 'Josefin Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.2rem 0.8rem; border-radius: 1px 1px 0 0; }
+  .calendar-icon .day { background: var(--parchment); color: var(--charcoal); font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 900; width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 0 0 1px 1px; }
+  .calendar-events { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .cal-event { border-left: 2px solid var(--gold); padding-left: 0.8rem; }
+  .cal-event .event-date { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+  .cal-event .event-name { font-family: 'Playfair Display', serif; font-size: 0.85rem; color: var(--cream); margin-top: 0.1rem; }
+  .cal-event .event-place { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; color: var(--muted-sage); margin-top: 0.1rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; background: var(--warm-brown); border: 1.5px solid var(--warm-brown); margin-bottom: 2rem; }
+  .ornament-divider { text-align: center; color: var(--gold); letter-spacing: 0.5em; font-size: 0.7rem; margin: 0.5rem 0; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(44,36,22,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 2rem; backdrop-filter: blur(2px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--cream); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23F5EDD8'/%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23C9A84C' opacity='0.06'/%3E%3C/svg%3E"); max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; border: 2px solid var(--warm-brown); box-shadow: 8px 8px 40px rgba(0,0,0,0.4); position: relative; animation: modalIn 0.3s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .modal-header { background: var(--deep-wine); padding: 1.5rem 2rem; border-bottom: 2px solid var(--gold); position: relative; }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: 1px solid rgba(245,237,216,0.3); color: var(--cream); width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; border-radius: 1px; transition: background 0.2s; }
+  .modal-close:hover { background: rgba(255,255,255,0.1); }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; font-style: italic; color: var(--cream); line-height: 1.25; }
+  .modal-meta { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; color: rgba(201,168,76,0.7); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.5rem; }
+  .modal-body { padding: 2rem; }
+  .modal-lead { font-size: 1rem; font-weight: 700; line-height: 1.6; color: var(--charcoal); border-left: 3px solid var(--gold); padding-left: 1rem; margin-bottom: 1.5rem; font-style: italic; }
+  .modal-text { font-size: 0.88rem; line-height: 1.8; color: #4A3B28; }
+  .modal-text p { margin-bottom: 1rem; }
+  .modal-source { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--parchment); font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; color: var(--warm-brown); letter-spacing: 0.1em; text-transform: uppercase; }
+  .modal::-webkit-scrollbar { width: 6px; }
+  .modal::-webkit-scrollbar-track { background: var(--parchment); }
+  .modal::-webkit-scrollbar-thumb { background: var(--warm-brown); border-radius: 3px; }
+  footer { background: var(--charcoal); border-top: 3px solid var(--gold); padding: 2rem; text-align: center; }
+  footer .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--cream); letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  footer p { font-family: 'Josefin Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; color: rgba(245,237,216,0.4); text-transform: uppercase; }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } .article-card.hero { grid-row: span 1; min-height: 260px; } .news-grid { grid-template-columns: repeat(2,1fr); } .two-col { grid-template-columns: 1fr; } .calendar-strip { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) { .news-grid { grid-template-columns: 1fr; } .stat-card { min-width: 100px; padding: 0.6rem 0.8rem; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="dateline">Est. 2025 · Buenos Aires</div>
+    <div class="masthead">
+      <h1>The Electoral Dispatch</h1>
+      <div class="subtitle">World Electoral Intelligence · Daily Edition</div>
+    </div>
+    <div class="edition-badge">Vol. I · No. 47<br>February 2026</div>
+  </div>
+  <nav>
+    <a class="active" onclick="filterSection('all',this)">All</a>
+    <a onclick="filterSection('usa',this)">USA</a>
+    <a onclick="filterSection('world',this)">World</a>
+    <a onclick="filterSection('tech',this)">Electoral Tech</a>
+    <a onclick="filterSection('calendar',this)">Calendar</a>
+  </nav>
+</header>
+
+<div class="dashboard">
+  <div class="stat-card">
+    <div class="stat-label">Elections This Month</div>
+    <div class="stat-value">14</div>
+    <div class="stat-sub">Worldwide · Feb 2026</div>
+    <div class="stat-tooltip">
+      <h4>Elections — February 2026</h4>
+      <ul>
+        <li>Ecuador (Presidential) <span>Feb 9</span></li>
+        <li>US Special TX-97 <span>Mar 4</span></li>
+        <li>Portugal (Legislative) <span>Mar 8</span></li>
+        <li>El Salvador (Local) <span>Feb 26</span></li>
+        <li>+10 more <span>→</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">US Ballots Active</div>
+    <div class="stat-value">38</div>
+    <div class="stat-sub">County & State Level</div>
+    <div class="stat-tooltip">
+      <h4>Active US Ballots</h4>
+      <ul>
+        <li>California Props <span>6</span></li>
+        <li>Texas Referenda <span>4</span></li>
+        <li>Ohio County Races <span>12</span></li>
+        <li>Special Elections <span>8</span></li>
+        <li>School Board Races <span>8</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Countries Voting in 2026</div>
+    <div class="stat-value">67</div>
+    <div class="stat-sub">National + Regional</div>
+    <div class="stat-tooltip">
+      <h4>Major 2026 Elections</h4>
+      <ul>
+        <li>Germany (Federal) <span>Feb 23 ✓</span></li>
+        <li>France (Regional) <span>Jun</span></li>
+        <li>Mexico (Midterm) <span>Jun</span></li>
+        <li>Brazil (Municipal) <span>Oct</span></li>
+        <li>+63 more <span>→</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Tech Stories Today</div>
+    <div class="stat-value">7</div>
+    <div class="stat-sub">Voting Systems & AI</div>
+    <div class="stat-tooltip">
+      <h4>Electoral Tech — Today</h4>
+      <ul>
+        <li>AI Signature Verification <span>New</span></li>
+        <li>Paper Trail Mandates <span>Bill</span></li>
+        <li>Blockchain Pilot WA <span>Report</span></li>
+        <li>Disinformation · EU <span>Alert</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="ticker-label">Breaking</div>
+  <div class="ticker-track">
+    <span>Germany CDU/CSU wins federal election · Friedrich Merz becomes Chancellor-designate</span>
+    <span>Texas HD-97 special election confirmed for March 4</span>
+    <span>Ecuador runoff: Noboa vs. González confirmed for April 13</span>
+    <span>EU Parliament debates new electoral transparency regulations</span>
+    <span>Pennsylvania counties adopt ranked-choice voting pilots</span>
+    <span>Argentina midterm primaries announced for August 2026</span>
+    <span>FEC opens inquiry into AI-generated campaign advertisements</span>
+    <span>India Election Commission releases 2026 state election calendar</span>
+    <span>Germany CDU/CSU wins federal election · Friedrich Merz becomes Chancellor-designate</span>
+    <span>Texas HD-97 special election confirmed for March 4</span>
+    <span>Ecuador runoff: Noboa vs. González confirmed for April 13</span>
+    <span>EU Parliament debates new electoral transparency regulations</span>
+    <span>Pennsylvania counties adopt ranked-choice voting pilots</span>
+    <span>Argentina midterm primaries announced for August 2026</span>
+    <span>FEC opens inquiry into AI-generated campaign advertisements</span>
+    <span>India Election Commission releases 2026 state election calendar</span>
+  </div>
+</div>
+
+<main>
+  <div class="section-rule"><span class="ornament">✦</span><h2>Featured Dispatches</h2><span class="ornament">✦</span></div>
+
+  <div class="hero-grid">
+    <div class="article-card hero" onclick="openArticle('hero1')">
+      <div class="hero-bg"></div>
+      <div class="article-content">
+        <span class="cat-tag">Featured</span>
+        <div class="article-title">Germany's Election Reshapes the European Center — What It Means for Democracy in 2026</div>
+        <div class="article-excerpt">Friedrich Merz's CDU/CSU coalition claimed victory in Germany's federal election, ending years of fractured Social Democratic governance. The result carries profound implications for European unity, NATO cohesion, and the global democratic order.</div>
+        <div class="article-meta">Feb 24, 2026 · World · 2 min read</div>
+        <div class="read-more">Read Dispatch →</div>
+      </div>
+    </div>
+    <div class="article-card small" onclick="openArticle('usa1')">
+      <span class="cat-tag usa">USA</span>
+      <div class="article-title">Texas HD-97: The Special Election That Could Tip the State House</div>
+      <div class="article-excerpt">A vacancy in one of Texas's most contested suburban districts has set off a scramble that could shift the balance in Austin. Both parties are pouring resources into a race that mirrors the broader national struggle for exurban voters.</div>
+      <div class="article-meta">Feb 28, 2026 · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('tech1')">
+      <span class="cat-tag tech">Electoral Tech</span>
+      <div class="article-title">The Paper Trail Mandate: How States Are Pushing Back Against Paperless Voting</div>
+      <div class="article-excerpt">Eleven states introduced legislation in early 2026 requiring verifiable paper records for all voting machines. Advocates say it's long overdue; vendors warn of supply chain bottlenecks ahead of November.</div>
+      <div class="article-meta">Feb 27, 2026 · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+  </div>
+
+  <div class="ornament-divider">— ✦ —</div>
+
+  <div class="section-rule"><span class="ornament">✦</span><h2>Upcoming Elections</h2><span class="ornament">✦</span></div>
+  <div class="calendar-strip">
+    <div class="calendar-icon">
+      <div class="month">March</div>
+      <div class="day">2026</div>
+    </div>
+    <div class="calendar-events">
+      <div class="cal-event"><div class="event-date">Mar 4</div><div class="event-name">Texas HD-97 Special Election</div><div class="event-place">Arlington, Texas — USA</div></div>
+      <div class="cal-event"><div class="event-date">Mar 8</div><div class="event-name">Portugal Legislative Election</div><div class="event-place">National · Portugal</div></div>
+      <div class="cal-event"><div class="event-date">Mar 15</div><div class="event-name">Ohio Statewide Referenda</div><div class="event-place">Multiple counties · Ohio, USA</div></div>
+      <div class="cal-event"><div class="event-date">Mar 22</div><div class="event-name">Senegal Parliamentary Election</div><div class="event-place">National · Senegal</div></div>
+      <div class="cal-event"><div class="event-date">Mar 29</div><div class="event-name">Chicago Municipal Runoffs</div><div class="event-place">Cook County · Illinois, USA</div></div>
+    </div>
+  </div>
+
+  <div class="section-rule"><span class="ornament">✦</span><h2>United States</h2><span class="ornament">✦</span></div>
+  <div class="news-grid">
+    <div class="article-card small" onclick="openArticle('usa2')">
+      <span class="cat-tag usa">USA</span>
+      <div class="article-title">Ranked-Choice Voting Gains Ground in Pennsylvania County Primaries</div>
+      <div class="article-excerpt">Three Pennsylvania counties approved pilot programs for ranked-choice voting in local primaries, part of a broader national trend. Supporters argue it reduces polarization; critics question voter familiarity with the method.</div>
+      <div class="article-meta">Feb 26, 2026 · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('usa3')">
+      <span class="cat-tag usa">USA</span>
+      <div class="article-title">Florida Counties Report Record Early Voting Registrations for Spring 2026</div>
+      <div class="article-excerpt">Early voting registration figures in Miami-Dade, Broward, and Palm Beach counties have surpassed 2022 midterm levels by 18%, suggesting heightened civic engagement ahead of statewide school board elections.</div>
+      <div class="article-meta">Feb 25, 2026 · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('usa4')">
+      <span class="cat-tag usa">USA</span>
+      <div class="article-title">California Proposition 47-B: What Voters Approved — and What Comes Next</div>
+      <div class="article-excerpt">The slim passage of California's Prop 47-B has left officials facing a tangle of implementation questions and competing legal opinions about what county prosecutors are actually authorized to do.</div>
+      <div class="article-meta">Feb 23, 2026 · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+  </div>
+
+  <div class="section-rule"><span class="ornament">✦</span><h2>World & Electoral Technology</h2><span class="ornament">✦</span></div>
+  <div class="two-col">
+    <div class="article-card small" onclick="openArticle('world1')">
+      <span class="cat-tag world">World</span>
+      <div class="article-title">Ecuador's Runoff: Noboa's Security Gamble Meets González's Social Coalition</div>
+      <div class="article-excerpt">With the first round producing no majority, Ecuador heads into a high-stakes presidential runoff in April. Incumbent Noboa's security-first platform faces a robust challenge from Luisa González, whose coalition has grown significantly since 2023.</div>
+      <div class="article-meta">Feb 27, 2026 · World · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('tech2')">
+      <span class="cat-tag tech">Electoral Tech</span>
+      <div class="article-title">AI at the Ballot: Machine Learning Deployed to Detect Signature Fraud</div>
+      <div class="article-excerpt">Election officials in Arizona and Georgia are piloting ML tools to verify mail ballot signatures at scale. Accuracy far exceeds human review rates — but civil liberties groups raise due process concerns for flagged voters.</div>
+      <div class="article-meta">Feb 26, 2026 · Tech · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('world2')">
+      <span class="cat-tag world">World</span>
+      <div class="article-title">India's 2026 State Elections: BJP Faces Tests in Three Key Battlegrounds</div>
+      <div class="article-excerpt">Bihar, West Bengal, and Tamil Nadu are set for state assembly elections in the second half of 2026, presenting genuine challenges for the ruling BJP. Opposition alliances have held together longer than analysts expected.</div>
+      <div class="article-meta">Feb 24, 2026 · World · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+    <div class="article-card small" onclick="openArticle('tech3')">
+      <span class="cat-tag tech">Electoral Tech</span>
+      <div class="article-title">Blockchain Ballot Pilot in Washington State: Cautiously Positive Early Findings</div>
+      <div class="article-excerpt">King County's six-month blockchain ballot tracking pilot concluded with no integrity breaches — but auditors noted adoption barriers among older voters and called for significant investment in voter education before any wider rollout.</div>
+      <div class="article-meta">Feb 22, 2026 · Tech · 2 min read</div>
+      <div class="read-more">Read →</div>
+    </div>
+  </div>
+  <!-- LIVE NEWS FROM API -->
+  <div id="live-news-section" style="display:none">
+    <div class="section-rule">
+      <span class="ornament">✦</span>
+      <h2 id="live-section-title">Live Dispatches</h2>
+      <span class="ornament">✦</span>
+    </div>
+    <div class="news-grid" id="live-news-grid"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-logo">The Electoral Dispatch</div>
+  <p>World Electoral Intelligence · Updated Daily · Est. 2025</p>
+</footer>
+
+<div class="modal-overlay" id="modal" onclick="closeOnOverlay(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modalCat" style="margin-bottom:0.5rem"></div>
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-meta" id="modalMeta"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-lead" id="modalLead"></div>
+      <div class="modal-text" id="modalText"></div>
+      <div class="modal-source" id="modalSource"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const articles = {
+  hero1: { cat:'world', catLabel:'World', title:"Germany's Election Reshapes the European Center — What It Means for Democracy in 2026", meta:"February 24, 2026 · World · 2 min read", lead:"Friedrich Merz's CDU/CSU coalition won Germany's federal election on February 23rd, ending the fractured Social Democratic-led government. The shift has immediate implications for European defense spending, migration policy, and the democratic center's resilience against far-right pressure.", text:`<p>Germany, long regarded as the stabilizing anchor of European liberal democracy, has voted. With 99% of votes counted, the CDU/CSU secured approximately 29% of the vote, enough to lead coalition negotiations with likely partners the SPD and potentially the Greens, while the far-right AfD came in at a record 20%.</p><p>Merz has signaled he will move quickly on a European debt instrument for defense, reversing Germany's traditional fiscal conservatism under pressure from NATO allies. His first calls were to Paris and Warsaw — a deliberate signal of continental priorities.</p><p>For electoral observers worldwide, the German result is a data point in a broader pattern: centrist coalitions are surviving, but at the cost of increasing complexity and shorter governing mandates. Watch how the coalition forms over the coming weeks — it will set the tone for European politics through 2028.</p>`, source:"Sources: Reuters, Deutsche Welle, ARD Exit Poll Data" },
+  usa1: { cat:'usa', catLabel:'USA', title:"Texas HD-97: The Special Election That Could Tip the State House", meta:"February 28, 2026 · USA · 2 min read", lead:"A single vacant seat in a Fort Worth suburb has become the most expensive Texas state legislative race in a non-election year. The outcome on March 4th may determine which party controls the Texas House through redistricting.", text:`<p>Texas House District 97 covers portions of Arlington and the western Fort Worth suburbs — territory that has swung Republican in statewide races but elected a moderate Democrat to the state house in 2024. The vacancy triggered a special election that has drawn national attention.</p><p>Both the Republican Party of Texas and the Texas Democratic Party have deployed full field operations. Independent expenditure groups have spent a combined $4.2 million — extraordinary for a single state house seat.</p><p>What makes HD-97 pivotal is arithmetic: the Texas House currently sits at 83 Republicans and 67 Democrats. A Democratic pickup would force Speaker Dade Phelan into more fragile coalition management ahead of a legislative session where property tax reform, school vouchers, and water infrastructure are all on the agenda.</p><p>Early voting began February 24th. Turnout models from both parties project a razor-thin margin.</p>`, source:"Sources: Texas Tribune, Ballotpedia, FEC filings" },
+  tech1: { cat:'tech', catLabel:'Electoral Tech', title:"The Paper Trail Mandate: How States Are Pushing Back Against Paperless Voting", meta:"February 27, 2026 · Electoral Tech · 2 min read", lead:"With concerns about voting machine integrity reaching a new peak after the 2024 election cycle, eleven states have introduced legislation in 2026 requiring verifiable paper records for every vote cast on electronic equipment.", text:`<p>The movement toward paper-backed electronic voting has been building since 2016, but 2026 may represent the legislative tipping point. States as ideologically varied as Georgia, Michigan, Nevada, and Utah have all introduced bills that would mandate voter-verified paper audit trails as the official record of each vote.</p><p>The technical argument is straightforward: a paper record allows for independent post-election audits that software audits alone cannot provide. Risk-limiting audits, now standard in over a dozen states, require paper to function.</p><p>The challenge is practical. Major voting system vendors have warned that a rapid legislative mandate could create bottlenecks: the production capacity for compliant machines is limited, and certification processes through the Election Assistance Commission take 12 to 18 months.</p>`, source:"Sources: Verified Voting Foundation, EAC, State Legislature Databases" },
+  usa2: { cat:'usa', catLabel:'USA', title:"Ranked-Choice Voting Gains Ground in Pennsylvania County Primaries", meta:"February 26, 2026 · USA · 2 min read", lead:"Three Pennsylvania counties — Chester, Centre, and Northampton — have approved the use of ranked-choice voting for local primary elections, the first such adoptions in the state.", text:`<p>Ranked-choice voting asks voters to rank candidates in order of preference. If no candidate wins a majority in the first round, the last-place candidate is eliminated and their votes redistributed — a process that continues until someone crosses 50%.</p><p>Supporters in Chester County, where the measure passed by a 63% margin in a county commissioner vote, argue that RCV produces more representative winners in multi-candidate primaries and reduces the incentive for negative campaigning.</p><p>The pilots are scheduled to begin with the May 2026 primary. Both parties will be watching the data carefully, as Pennsylvania remains a key 2028 presidential battleground state.</p>`, source:"Sources: FairVote, Pennsylvania Department of State, county commission records" },
+  usa3: { cat:'usa', catLabel:'USA', title:"Florida Counties Report Record Early Voting Registrations for Spring 2026", meta:"February 25, 2026 · USA · 2 min read", lead:"Election supervisors in Florida's three largest Democratic-leaning counties report early voter registration numbers 18% above comparable 2022 midterm periods — a sign of elevated civic engagement ahead of statewide school board contests.", text:`<p>Miami-Dade, Broward, and Palm Beach counties account for roughly a quarter of Florida's total registered voters. Election supervisors cite several factors: a mobilization push by teachers' unions ahead of contested school board elections, sustained engagement following the 2024 cycle, and an unusually active voter registration drive targeting 18-to-24 year olds in Miami-Dade.</p><p>The school board elections scheduled for August 2026 will feature a number of contested races shaped by curriculum disputes, book removal policies, and debates over the role of locally elected boards versus state education authority.</p>`, source:"Sources: Florida Division of Elections, county supervisor offices" },
+  usa4: { cat:'usa', catLabel:'USA', title:"California Proposition 47-B: What Voters Approved — and What Comes Next", meta:"February 23, 2026 · USA · 2 min read", lead:"The passage of Proposition 47-B by a margin of 51.3% to 48.7% has left California officials facing a tangle of implementation questions — and competing legal opinions about what the measure actually authorizes.", text:`<p>Proposition 47-B modified the state's sentencing guidelines for a category of non-violent drug offenses, shifting default dispositions from custody-eligible to probation-eligible for first and second offenders. Implementation has been delayed by legal challenges from county district attorneys.</p><p>San Francisco and Los Angeles county DAs have announced they will implement the new guidelines by April 2026. Fresno and Riverside DAs have indicated they will wait for appellate court guidance before changing charging practices.</p><p>The California Supreme Court has agreed to take up the question of preemption on an expedited basis. A ruling is expected by summer 2026, which would clarify the landscape ahead of the November election cycle.</p>`, source:"Sources: California Secretary of State, LA Times, California Courts" },
+  world1: { cat:'world', catLabel:'World', title:"Ecuador's Runoff: Noboa's Security Gamble Meets González's Social Coalition", meta:"February 27, 2026 · World · 2 min read", lead:"Ecuador's February 9th first-round presidential vote produced no majority, setting up a rematch between Daniel Noboa and Luisa González for April 13th. But the political terrain has shifted considerably since 2023.", text:`<p>President Noboa entered the race with incumbency and a genuine security record — organized crime violence, which spiked dramatically in 2023 and 2024, has declined measurably under his administration's state of emergency policies. He took 36% of the first-round vote, ahead of González's 32%.</p><p>González, the candidate of the Revolución Ciudadana movement, has built a broader coalition since her 2023 loss. She has moderated her economic messaging and focused on healthcare access, education funding, and the cost of living — issues where Noboa's record is more vulnerable.</p><p>The critical variable in April will be where the remaining 32% of first-round votes migrate. Pachakutik, the indigenous movement party whose candidate finished third with 11%, has not yet endorsed either candidate.</p>`, source:"Sources: CNE Ecuador, Reuters, El Comercio" },
+  tech2: { cat:'tech', catLabel:'Electoral Tech', title:"AI at the Ballot: Machine Learning Deployed to Detect Signature Fraud", meta:"February 26, 2026 · Electoral Tech · 2 min read", lead:"Election offices in Arizona and Georgia have quietly begun using machine learning models to assist in mail ballot signature verification — a process traditionally done under significant time pressure by human reviewers.", text:`<p>Mail ballot signature verification has long been one of the most labor-intensive and inconsistently applied processes in American election administration. The ML systems being piloted in Maricopa County and Fulton County work as a first-pass filter: the model flags signatures for human review rather than making autonomous rejection decisions.</p><p>Early accuracy data from the Maricopa pilot shows the model flagging genuine mismatches at a rate comparable to experienced human reviewers — while reducing time cost per ballot by approximately 60%. The false positive rate was 2.3%, below the estimated human error baseline of 4-6%.</p><p>The ACLU has raised due process concerns: the model's training data, weighting criteria, and error rates by demographic group have not been publicly disclosed.</p>`, source:"Sources: ProPublica, Maricopa County Recorder, MIT Election Lab" },
+  world2: { cat:'world', catLabel:'World', title:"India's 2026 State Elections: BJP Faces Tests in Three Key Battlegrounds", meta:"February 24, 2026 · World · 2 min read", lead:"The Election Commission of India has confirmed that Bihar, West Bengal, and Tamil Nadu will hold state assembly elections in the second half of 2026 — all three presenting genuine challenges for the ruling BJP.", text:`<p>Bihar is a traditional BJP stronghold through its alliance with Nitish Kumar's JDU — but Kumar's alliance-switching history and advancing age have introduced uncertainty. The INDIA coalition has targeted the state aggressively.</p><p>West Bengal remains Mamata Banerjee's Trinamool Congress stronghold. The BJP's aggressive push in 2021 fell short, and subsequent organizational setbacks have weakened their position.</p><p>For Prime Minister Modi, a poor showing in all three would accelerate internal pressure within the BJP and embolden the INDIA alliance ahead of its own organizational consolidation efforts.</p>`, source:"Sources: Election Commission of India, The Hindu, India Today" },
+  tech3: { cat:'tech', catLabel:'Electoral Tech', title:"Blockchain Ballot Pilot in Washington State: Cautiously Positive Early Findings", meta:"February 22, 2026 · Electoral Tech · 2 min read", lead:"King County, Washington concluded its six-month blockchain ballot tracking pilot with no reported integrity failures, though auditors identified accessibility gaps and noted the technology is not yet ready for primary ballot casting.", text:`<p>The King County pilot used a permissioned blockchain ledger to allow mail ballot senders to verify that their ballot had been received, processed, and counted. The pilot was not testing whether voters could cast ballots via blockchain, but whether blockchain could provide a tamper-evident audit trail for mail ballot processing.</p><p>Where the pilot fell short was in user adoption. Of 380,000 eligible participants, only 22% used the tracking interface. Older voters and those with limited digital access were significantly underrepresented.</p><p>The Secretary of State's office is reviewing the findings. A formal recommendation on expansion is expected by June 2026.</p>`, source:"Sources: King County Elections, Washington Secretary of State, MIT Digital Currency Initiative" }
+};
+
+function openArticle(id) {
+  const a = articles[id];
+  if (!a) return;
+  document.getElementById('modalCat').innerHTML = `<span class="cat-tag ${a.cat}">${a.catLabel}</span>`;
+  document.getElementById('modalTitle').textContent = a.title;
+  document.getElementById('modalMeta').textContent = a.meta;
+  document.getElementById('modalLead').textContent = a.lead;
+  document.getElementById('modalText').innerHTML = a.text;
+  document.getElementById('modalSource').textContent = a.source;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeOnOverlay(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function filterSection(cat, el) {
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  if (cat === 'all') loadNews('election OR ballot OR voting');
+  else if (cat === 'usa') loadNews('US election OR county ballot OR referendum USA');
+  else if (cat === 'world') loadNews('world election OR presidential election OR parliament vote');
+  else if (cat === 'tech') loadNews('voting technology OR electoral system OR voting machine');
+  else if (cat === 'calendar') loadNews('election date OR election schedule 2026');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ─── NEWS API INTEGRATION ───
+const API_KEY = 'b91d07ad9ca84c78b968e3207fd371da';
+
+function getCategoryFromTitle(title) {
+  const t = title.toLowerCase();
+  if (t.includes('tech') || t.includes('machine') || t.includes('blockchain') || t.includes('ai') || t.includes('software') || t.includes('cyber') || t.includes('digital')) return { cat: 'tech', label: 'Electoral Tech' };
+  if (t.includes('usa') || t.includes('united states') || t.includes('congress') || t.includes('senate') || t.includes('county') || t.includes('state') || t.includes('california') || t.includes('texas') || t.includes('florida') || t.includes('ohio') || t.includes('michigan')) return { cat: 'usa', label: 'USA' };
+  return { cat: 'world', label: 'World' };
+}
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+  return `${Math.floor(diff/1440)}d ago`;
+}
+
+function buildArticleCard(article, size='small') {
+  const { cat, label } = getCategoryFromTitle(article.title + ' ' + (article.description || ''));
+  const excerpt = article.description ? article.description.slice(0, 180) + '...' : 'Read the full article for details.';
+  const when = timeAgo(article.publishedAt);
+  const src = article.source?.name || 'Wire';
+  const id = 'live_' + Math.random().toString(36).slice(2);
+
+  // Store article data for modal
+  window._liveArticles = window._liveArticles || {};
+  window._liveArticles[id] = {
+    cat, catLabel: label,
+    title: article.title,
+    meta: `${when} · ${src} · 2 min read`,
+    lead: excerpt,
+    text: `<p>${excerpt}</p><p>This article was retrieved live from ${src}. For the full story, visit the original source.</p>`,
+    source: `Source: ${src} · ${article.url ? `<a href="${article.url}" target="_blank" rel="noopener">Read original →</a>` : ''}`
+  };
+
+  return `<div class="article-card ${size}" onclick="openLiveArticle('${id}')">
+    <span class="cat-tag ${cat}">${label}</span>
+    <div class="article-title">${article.title}</div>
+    <div class="article-excerpt">${excerpt}</div>
+    <div class="article-meta">${when} · ${src}</div>
+    <div class="read-more">Read →</div>
+  </div>`;
+}
+
+function openLiveArticle(id) {
+  const a = window._liveArticles?.[id];
+  if (!a) return;
+  document.getElementById('modalCat').innerHTML = `<span class="cat-tag ${a.cat}">${a.catLabel}</span>`;
+  document.getElementById('modalTitle').textContent = a.title;
+  document.getElementById('modalMeta').textContent = a.meta;
+  document.getElementById('modalLead').textContent = a.lead;
+  document.getElementById('modalText').innerHTML = a.text;
+  document.getElementById('modalSource').innerHTML = a.source;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+async function loadNews(query = 'election OR ballot OR voting') {
+  const liveSection = document.getElementById('live-news-section');
+  const liveGrid = document.getElementById('live-news-grid');
+  const liveTitle = document.getElementById('live-section-title');
+
+  liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;letter-spacing:0.15em;color:var(--warm-brown);grid-column:1/-1">FETCHING DISPATCHES...</div>`;
+  liveSection.style.display = 'block';
+
+  try {
+    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=6&apiKey=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.status !== 'ok' || !data.articles?.length) {
+      liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;color:var(--warm-brown);grid-column:1/-1">No dispatches found. Try another section.</div>`;
+      return;
+    }
+
+    // Update stat counters
+    document.querySelector('.stat-value').textContent = data.totalResults > 99 ? '99+' : data.totalResults;
+
+    liveGrid.innerHTML = data.articles.map(a => buildArticleCard(a)).join('');
+
+    // Update ticker with real headlines
+    const tickerTrack = document.querySelector('.ticker-track');
+    const headlines = data.articles.slice(0, 8).map(a => `<span>${a.title}</span>`).join('');
+    tickerTrack.innerHTML = headlines + headlines;
+
+  } catch (err) {
+    liveGrid.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Josefin Sans',sans-serif;font-size:0.75rem;color:var(--terracotta);grid-column:1/-1">Could not reach NewsAPI. Check connection or API key.</div>`;
+  }
+}
+
+// Load on startup
+window.addEventListener('DOMContentLoaded', () => loadNews('election OR ballot OR voting'));
+</script>
+</body>
+</html>
 
