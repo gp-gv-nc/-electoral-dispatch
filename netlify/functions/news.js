@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event) => {
   const API_KEY = process.env.NEWS_API_KEY;
   const q = event.queryStringParameters?.q || 'election';
@@ -24,4 +22,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
